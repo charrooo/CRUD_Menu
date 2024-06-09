@@ -14,8 +14,8 @@ function Write() {
   const [inputValue4, setInputValue4] = useState('');
   const [FoodArray, setFoodArray] = useState([]);
   const [DrinkArray, setDrinkArray] = useState([]);
-  const [foodStock, setFoodStock] = useState(50); // Initial number of food stocks
-  const [drinkStock, setDrinkStock] = useState(50); // Initial number of drink stocks
+  const [foodStock, setFoodStock] = useState(50);
+  const [drinkStock, setDrinkStock] = useState(50); 
   
 
   useEffect(() => {
@@ -26,7 +26,6 @@ function Write() {
   const saveData = async () => {
     const db = getDatabase(app);
     if (selectedItem) {
-      // Update existing item
       const dbRef = ref(db, `Menu/Food/${selectedItem.FoodId}`);
       await update(dbRef, {
         FoodName: inputValue1,
@@ -40,7 +39,6 @@ function Write() {
         alert("error: " + error.message);
       });
     } else {
-      // Add new item
       if (foodStock > 0) {
         const newDocRef = push(ref(db, "Menu/Food"));
         set(newDocRef, {
@@ -50,7 +48,7 @@ function Write() {
           alert("Order saved successfully");
           setIsDialogOpen(false);
           fetchData();
-          setFoodStock(prevStock => prevStock - 1); // Reduce food stock by 1
+          setFoodStock(prevStock => prevStock - 1); 
         }).catch((error) => {
           alert("error: " + error.message);
         });
@@ -63,7 +61,6 @@ function Write() {
   const saveData2 = async () => {
     const db = getDatabase(app);
     if (selectedItem) {
-      // Update existing item
       const dbRef = ref(db, `Menu/Drinks/${selectedItem.DrinkId}`);
       await update(dbRef, {
         DrinkName: inputValue3,
@@ -77,7 +74,6 @@ function Write() {
         alert("error: " + error.message);
       });
     } else {
-      // Add new item
       if (drinkStock > 0) {
         const newDocRef = push(ref(db, "Menu/Drinks"));
         set(newDocRef, {
@@ -87,7 +83,7 @@ function Write() {
           alert("Data saved successfully");
           setIsDialogOpen2(false);
           fetchData2();
-          setDrinkStock(prevStock => prevStock - 1); // Reduce drink stock by 1
+          setDrinkStock(prevStock => prevStock - 1);
         }).catch((error) => {
           alert("error: " + error.message);
         });
@@ -172,7 +168,6 @@ const totalDrinkCost = DrinkArray.reduce((total, item) => total + parseFloat(ite
           <h1>Fries and Drink Merchant</h1>
         </div>
         <div className="grid grid-cols-2 gap-8">
-          {/* Dialog Box 1 */}
           <div className="relative">
             <div className="rounded-xl transform">
               <div className='relative group'>
@@ -188,7 +183,6 @@ const totalDrinkCost = DrinkArray.reduce((total, item) => total + parseFloat(ite
               </div>
             </div>
           </div>
-          {/* Dialog Box 2 */}
           <div className="relative">
             <div className="rounded-xl transform">
               <div className='relative group'>
@@ -204,7 +198,6 @@ const totalDrinkCost = DrinkArray.reduce((total, item) => total + parseFloat(ite
               </div>
             </div>
           </div>
-          {/* Dialog Box 3 */}
           <div className="relative">
             <div className="pt-6 rounded-xl transform">
               <div className='relative group'>
@@ -220,7 +213,6 @@ const totalDrinkCost = DrinkArray.reduce((total, item) => total + parseFloat(ite
               </div>
             </div>
           </div>
-          {/* Dialog Box 4 */}
           <div className="relative">
             <div className="pt-6 rounded-xl transform">
               <div className='relative group'>
