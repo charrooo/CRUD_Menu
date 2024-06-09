@@ -14,6 +14,9 @@ function Write() {
   const [inputValue4, setInputValue4] = useState('');
   const [FoodArray, setFoodArray] = useState([]);
   const [DrinkArray, setDrinkArray] = useState([]);
+  const [foodStock, setFoodStock] = useState(50); // Initial number of food stocks
+  const [drinkStock, setDrinkStock] = useState(50); // Initial number of drink stocks
+  
 
   useEffect(() => {
     fetchData();
@@ -23,10 +26,11 @@ function Write() {
   const saveData = async () => {
     const db = getDatabase(app);
     if (selectedItem) {
+      // Update existing item
       const dbRef = ref(db, `Menu/Food/${selectedItem.FoodId}`);
       await update(dbRef, {
         FoodName: inputValue1,
-        FoodDefinition: inputValue2
+        FoodCost: inputValue2
       }).then(() => {
         alert("Data updated successfully");
         setIsDialogOpen(false);
@@ -36,27 +40,34 @@ function Write() {
         alert("error: " + error.message);
       });
     } else {
-      const newDocRef = push(ref(db, "Menu/Food"));
-      set(newDocRef, {
-        FoodName: inputValue1,
-        FoodDefinition: inputValue2
-      }).then(() => {
-        alert("Order saved successfully");
-        setIsDialogOpen(false);
-        fetchData();
-      }).catch((error) => {
-        alert("error: " + error.message);
-      });
+      // Add new item
+      if (foodStock > 0) {
+        const newDocRef = push(ref(db, "Menu/Food"));
+        set(newDocRef, {
+          FoodName: inputValue1,
+          FoodCost: inputValue2
+        }).then(() => {
+          alert("Order saved successfully");
+          setIsDialogOpen(false);
+          fetchData();
+          setFoodStock(prevStock => prevStock - 1); // Reduce food stock by 1
+        }).catch((error) => {
+          alert("error: " + error.message);
+        });
+      } else {
+        alert("Food stock is insufficient.");
+      }
     }
   };
 
   const saveData2 = async () => {
     const db = getDatabase(app);
     if (selectedItem) {
+      // Update existing item
       const dbRef = ref(db, `Menu/Drinks/${selectedItem.DrinkId}`);
       await update(dbRef, {
         DrinkName: inputValue3,
-        DrinkDefinition: inputValue4
+        DrinkCost: inputValue4
       }).then(() => {
         alert("Data updated successfully");
         setIsDialogOpen2(false);
@@ -66,17 +77,23 @@ function Write() {
         alert("error: " + error.message);
       });
     } else {
-      const newDocRef = push(ref(db, "Menu/Drinks"));
-      set(newDocRef, {
-        DrinkName: inputValue3,
-        DrinkDefinition: inputValue4,
-      }).then(() => {
-        alert("Data saved successfully");
-        setIsDialogOpen2(false);
-        fetchData2();
-      }).catch((error) => {
-        alert("error: " + error.message);
-      });
+      // Add new item
+      if (drinkStock > 0) {
+        const newDocRef = push(ref(db, "Menu/Drinks"));
+        set(newDocRef, {
+          DrinkName: inputValue3,
+          DrinkCost: inputValue4,
+        }).then(() => {
+          alert("Data saved successfully");
+          setIsDialogOpen2(false);
+          fetchData2();
+          setDrinkStock(prevStock => prevStock - 1); // Reduce drink stock by 1
+        }).catch((error) => {
+          alert("error: " + error.message);
+        });
+      } else {
+        alert("Drink stock is insufficient.");
+      }
     }
   };
 
@@ -134,14 +151,19 @@ function Write() {
     setSelectedItem(item);
     if (type === 'food') {
       setInputValue1(item.FoodName || '');
-      setInputValue2(item.FoodDefinition || '');
+      setInputValue2(item.FoodCost || '');
       setIsDialogOpen(true);
     } else {
       setInputValue3(item.DrinkName || '');
-      setInputValue4(item.DrinkDefinition || '');
+      setInputValue4(item.DrinkCost || '');
       setIsDialogOpen2(true);
     }
   };
+
+  
+
+const totalFoodCost = FoodArray.reduce((total, item) => total + parseFloat(item.FoodCost), 0);
+const totalDrinkCost = DrinkArray.reduce((total, item) => total + parseFloat(item.DrinkCost), 0);
 
   return (
     <div className="relative min-h-screen">
@@ -217,47 +239,59 @@ function Write() {
         </div>
       </div>
       {isDialogOpen4 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col">
             <div className="flex justify-between mb-4">
-              <div className="mr-4">
-                <h2 className="text-xl font-bold">Display Food Orders</h2>
-                <button onClick={fetchData}>Display Food Data</button>
-                <ul>
-                  {FoodArray.map((item, index) => (
-                    <li key={index}>
-                      {item.FoodName}: {item.FoodDefinition} : {item.FoodId}
-                      <button className='button1' onClick={() => handleEdit(item, 'food')}>UPDATE</button>
-                      <button className='button1 ml-2' onClick={() => deleteFood(item.FoodId)}>DELETE</button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Display Drink Orders</h2>
-                <button onClick={fetchData2}>Display Drink Data</button>
-                <ul>
-                  {DrinkArray.map((item, index) => (
-                    <li key={index}>
-                      {item.DrinkName}: {item.DrinkDefinition} : {item.DrinkId}
-                      <button className='button1' onClick={() => handleEdit(item, 'drink')}>UPDATE</button>
-                      <button className='button1 ml-2' onClick={() => deleteDrink(item.DrinkId)}>DELETE</button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <div className="mr-4">
+                    <h2 className="text-xl font-bold">Display Food Orders</h2>
+                    <button onClick={fetchData}>Display Food Data</button>
+                    <ul>
+                        {FoodArray.map((item, index) => (
+                            <li key={index}>
+                                {item.FoodName}: {item.FoodCost} : {item.FoodId}
+                                <button className='button1' onClick={() => handleEdit(item, 'food')}>UPDATE</button>
+                                <button className='button1 ml-2' onClick={() => deleteFood(item.FoodId)}>DELETE</button>
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="text-right font-bold">
+                        Total Food Cost: ${totalFoodCost}
+                    </div>
+                    <div className="text-right font-bold">
+                        Remaining Food Stocks: {foodStock}
+                    </div>
+                </div>
+                <div>
+                    <h2 className="text-xl font-bold">Display Drink Orders</h2>
+                    <button onClick={fetchData2}>Display Drink Data</button>
+                    <ul>
+                        {DrinkArray.map((item, index) => (
+                            <li key={index}>
+                                {item.DrinkName}: {item.DrinkCost} : {item.DrinkId}
+                                <button className='button1' onClick={() => handleEdit(item, 'drink')}>UPDATE</button>
+                                <button className='button1 ml-2' onClick={() => deleteDrink(item.DrinkId)}>DELETE</button>
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="text-right font-bold">
+                        Total Drink Cost: ${totalDrinkCost}
+                    </div>
+                    <div className="text-right font-bold">
+                        Remaining Drink Stocks: {drinkStock}
+                    </div>
+                </div>
             </div>
             <div className="flex justify-end">
-              <button
-                onClick={() => setIsDialogOpen4(false)}
-                className='bg-gray-500 text-white px-4 py-2 rounded'
-              >
-                Close
-              </button>
+                <button
+                    onClick={() => setIsDialogOpen4(false)}
+                    className='bg-gray-500 text-white px-4 py-2 rounded'
+                >
+                    Close
+                </button>
             </div>
-          </div>
         </div>
-      )}
+    </div>
+)}
       {isDialogOpen3 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg shadow-lg">
@@ -296,14 +330,14 @@ function Write() {
               <ul className="text-sm mr-4">
                 {FoodArray.map((item, index) => (
                   <li key={index} className="mb-1">
-                    {item.FoodName}: {item.FoodDefinition}
+                    {item.FoodName}: {item.FoodCost}
                   </li>
                 ))}
               </ul>
               <ul className="text-sm">
                 {DrinkArray.map((item, index) => (
                   <li key={index} className="mb-1">
-                    {item.DrinkName}: {item.DrinkDefinition}
+                    {item.DrinkName}: {item.DrinkCost}
                   </li>
                 ))}
               </ul>
@@ -328,15 +362,14 @@ function Write() {
               value={inputValue1}
               onChange={(e) => setInputValue1(e.target.value)}
               className='border p-2 mb-4 w-full'
-              placeholder='Fries'
+              placeholder='Description(Small 25₱, Medium 50₱, Large 75₱'
             />
-            <p>Small 25₱, Medium 50₱, Large 50₱</p>
             <input
               type='text'
               value={inputValue2}
               onChange={(e) => setInputValue2(e.target.value)}
               className='border p-2 mb-4 w-full'
-              placeholder='Description(Small 25₱, Medium 50₱, Large 50₱)'
+              placeholder='₱₱₱'
             />
             <div>
             </div>
@@ -366,15 +399,14 @@ function Write() {
               value={inputValue3}
               onChange={(e) => setInputValue3(e.target.value)}
               className='border p-2 mb-4 w-full'
-              placeholder='Drinks'
+              placeholder='Drinks(Small 25₱, Medium 50₱, Large 75₱'
             />
-            <p>Small 25₱, Medium 50₱, Large 50₱</p>
             <input
               type='text'
               value={inputValue4}
               onChange={(e) => setInputValue4(e.target.value)}
               className='border p-2 mb-4 w-full'
-              placeholder='Description(Small 25₱, Medium 50₱, Large 50₱)'
+              placeholder='₱₱₱'
             />
             <div>
             </div>
@@ -383,7 +415,7 @@ function Write() {
                 onClick={() => { saveData2(); setIsDialogOpen2(false); }}
                 className='bg-blue-500 text-white px-4 py-2 rounded mr-2'
               >
-                {selectedItem ? "Update Order" : "Save Data"}
+                {selectedItem ? "Update Order" : "Place order"}
               </button>
               <button
                 onClick={() => setIsDialogOpen2(false)}
